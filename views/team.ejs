@@ -1,0 +1,43 @@
+<%- include('partials/head', { title: 'Team' }) %>
+<h1>Team</h1>
+<div class="card flush"><div class="table-wrap"><table>
+  <thead><tr><th>Name</th><th>Username</th><th>Role</th><th>Change password</th><th></th></tr></thead>
+  <tbody>
+  <% users.forEach(function (u) { %>
+    <tr>
+      <td><%= u.name %><% if (u.id === user.id) { %> <span class="muted">(you)</span><% } %></td>
+      <td><%= u.username %></td>
+      <td><%= u.is_admin ? 'Administrator' : 'Team member' %></td>
+      <td>
+        <% if (u.id === user.id || user.is_admin) { %>
+        <form method="post" action="/team/<%= u.id %>/password" class="inline">
+          <input type="hidden" name="_csrf" value="<%= csrf %>">
+          <input type="password" name="password" minlength="8" placeholder="New password" required autocomplete="new-password">
+          <button class="btn sm">Set</button>
+        </form>
+        <% } %>
+      </td>
+      <td><% if (user.is_admin && u.id !== user.id) { %>
+        <form method="post" action="/team/<%= u.id %>/delete" onsubmit="return confirm('Remove <%= u.name %>?')"><input type="hidden" name="_csrf" value="<%= csrf %>"><button class="link danger">remove</button></form>
+      <% } %></td>
+    </tr>
+  <% }) %>
+  </tbody>
+</table></div></div>
+
+<% if (user.is_admin) { %>
+<section class="card">
+  <h2>Add a team member</h2>
+  <form method="post" action="/team" class="fields">
+    <input type="hidden" name="_csrf" value="<%= csrf %>">
+    <label>Name <input name="name" required></label>
+    <label>Username <input name="username" required autocomplete="off"></label>
+    <label>E-mail (optional) <input name="email" type="email"></label>
+    <label>Temporary password <input name="password" type="password" minlength="8" required autocomplete="new-password"></label>
+    <label class="check"><input type="checkbox" name="is_admin" value="1"> Administrator (can add/remove users and delete agreements)</label>
+    <div><button class="btn primary">Add member</button></div>
+  </form>
+  <p class="hint">Share the username and temporary password with them; they can change it here after logging in.</p>
+</section>
+<% } %>
+<%- include('partials/foot') %>

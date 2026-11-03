@@ -1,0 +1,32 @@
+<%- include('partials/head', { title: 'Agreements' }) %>
+<div class="pagehead">
+  <h1>Agreements</h1>
+  <a class="btn primary" href="/agreements/new">+ New agreement</a>
+</div>
+<form class="filters" method="get">
+  <input name="q" value="<%= q %>" placeholder="Search call sign, name, serial, cellphone…">
+  <select name="status">
+    <option value="">All statuses</option>
+    <% ['active','paid','terminated'].forEach(function (s) { %><option value="<%= s %>" <%= status === s ? 'selected' : '' %>><%= s %></option><% }) %>
+  </select>
+  <button class="btn">Filter</button>
+</form>
+<div class="card flush"><div class="table-wrap"><table>
+  <thead><tr><th>Call sign</th><th>Name</th><th>Serial no.</th><th>Plan</th><th class="num">Paid</th><th class="num">Balance</th><th>Status</th><th>Signed</th></tr></thead>
+  <tbody>
+  <% rows.forEach(function (a) { %>
+    <tr>
+      <td><a href="/agreements/<%= a.id %>"><strong><%= a.call_sign %></strong></a></td>
+      <td><%= a.full_names %> <%= a.surname %></td>
+      <td><%= a.serial_number %></td>
+      <td><%= a.plan_months %> mo</td>
+      <td class="num"><%= m.formatRand(a.pos.paid_cents) %></td>
+      <td class="num <%= a.pos.arrears_cents > 0 && a.status === 'active' ? 'bad' : '' %>"><%= m.formatRand(a.pos.balance_cents) %></td>
+      <td><span class="badge <%= a.status %>"><%= a.status %></span><% if (a.status === 'active' && a.pos.arrears_cents > 0) { %> <span class="badge overdue">arrears</span><% } %></td>
+      <td><%= a.signed_file ? '✅' : '—' %></td>
+    </tr>
+  <% }) %>
+  <% if (!rows.length) { %><tr><td colspan="8" class="muted center">No agreements found.</td></tr><% } %>
+  </tbody>
+</table></div></div>
+<%- include('partials/foot') %>
