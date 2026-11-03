@@ -7,6 +7,7 @@ const DATA_DIR = path.resolve(env.DATA_DIR || path.join(__dirname, '..', 'data')
 module.exports = {
   port: Number(env.PORT || 3000),
   baseUrl: (env.BASE_URL || `http://localhost:${env.PORT || 3000}`).replace(/\/$/, ''),
+  setupCode: env.SETUP_CODE || '',
   sessionSecret: env.SESSION_SECRET || 'change-me-in-production',
   dataDir: DATA_DIR,
   uploadDir: path.join(DATA_DIR, 'uploads'),
