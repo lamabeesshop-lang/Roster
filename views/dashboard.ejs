@@ -1,0 +1,52 @@
+<%- include('partials/head', { title: 'Dashboard' }) %>
+<h1>Dashboard</h1>
+<div class="stats">
+  <div class="stat"><span class="label">Active agreements</span><span class="value"><%= counts.active || 0 %></span></div>
+  <div class="stat"><span class="label">Paid in full</span><span class="value"><%= counts.paid || 0 %></span></div>
+  <div class="stat"><span class="label">Outstanding (all active)</span><span class="value"><%= m.formatRand(outstanding) %></span></div>
+  <div class="stat"><span class="label">Collected in <%= m.periodLabel(period) %></span><span class="value"><%= m.formatRand(collected) %></span></div>
+</div>
+
+<div class="grid2">
+  <section class="card">
+    <h2><%= m.periodLabel(period) %> invoices</h2>
+    <p><strong><%= inv.total || 0 %></strong> created, <strong><%= inv.sent || 0 %></strong> sent.</p>
+    <a class="btn primary" href="/invoices?period=<%= period %>">Go to monthly invoices →</a>
+  </section>
+  <section class="card">
+    <h2>Missing signed agreements <span class="pill"><%= missingSigned.length %></span></h2>
+    <% if (!missingSigned.length) { %><p class="muted">All agreements have a signed copy uploaded. ✅</p><% } %>
+    <ul class="plain">
+      <% missingSigned.slice(0, 8).forEach(function (a) { %>
+        <li><a href="/agreements/<%= a.id %>#signed"><%= a.call_sign %> – <%= a.full_names %> <%= a.surname %></a></li>
+      <% }) %>
+    </ul>
+  </section>
+</div>
+
+<section class="card">
+  <h2>In arrears <span class="pill warn"><%= arrears.length %></span></h2>
+  <% if (!arrears.length) { %><p class="muted">Nobody is behind on payments.</p><% } else { %>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Call sign</th><th>Name</th><th>Cellphone</th><th class="num">Arrears</th><th class="num">Balance</th></tr></thead>
+    <tbody>
+    <% arrears.forEach(function (r) { %>
+      <tr><td><a href="/agreements/<%= r.a.id %>"><%= r.a.call_sign %></a></td><td><%= r.a.full_names %> <%= r.a.surname %></td>
+      <td><%= r.a.cellphone %></td><td class="num bad"><%= m.formatRand(r.p.arrears_cents) %></td><td class="num"><%= m.formatRand(r.p.balance_cents) %></td></tr>
+    <% }) %>
+    </tbody>
+  </table></div>
+  <% } %>
+</section>
+
+<section class="card">
+  <h2>Recent activity</h2>
+  <ul class="activity">
+    <% recent.forEach(function (r) { %>
+      <li><span class="muted"><%= m.formatDate(r.created_at) %></span> <strong><%= r.user_name || '—' %></strong>
+      <%= r.action %><% if (r.call_sign) { %> · <a href="/agreements/<%= r.agreement_id %>"><%= r.call_sign %></a><% } %></li>
+    <% }) %>
+    <% if (!recent.length) { %><li class="muted">Nothing yet – start by <a href="/agreements/new">adding an agreement</a>.</li><% } %>
+  </ul>
+</section>
+<%- include('partials/foot') %>

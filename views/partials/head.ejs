@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title><%= typeof title !== 'undefined' ? title + ' · ' : '' %>Radio Agreements · <%= config.seller.shortName %></title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<% if (user) { %>
+<header class="topbar">
+  <a class="brand" href="/"><span class="logo">📻</span> <%= config.seller.shortName %> Radios</a>
+  <nav>
+    <a href="/" class="<%= path === '/' ? 'on' : '' %>">Dashboard</a>
+    <a href="/agreements" class="<%= path.startsWith('/agreements') ? 'on' : '' %>">Agreements</a>
+    <a href="/invoices" class="<%= path.startsWith('/invoices') ? 'on' : '' %>">Invoices</a>
+    <a href="/team" class="<%= path.startsWith('/team') ? 'on' : '' %>">Team</a>
+  </nav>
+  <form method="post" action="/logout" class="logout">
+    <input type="hidden" name="_csrf" value="<%= csrf %>">
+    <span class="who"><%= user.name %></span>
+    <button class="link">Log out</button>
+  </form>
+</header>
+<% } %>
+<main class="<%= user ? '' : 'narrow' %>">
+<% flash.forEach(function (f) { %>
+  <div class="flash <%= f.type %>"><%= f.text %></div>
+<% }) %>

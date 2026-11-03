@@ -1,0 +1,46 @@
+<%- include('partials/head', { title: 'Invoices' }) %>
+<div class="pagehead">
+  <h1>Invoices · <%= m.periodLabel(period) %></h1>
+  <div class="monthnav">
+    <a class="btn" href="/invoices?period=<%= prev %>">← <%= m.periodLabel(prev) %></a>
+    <a class="btn" href="/invoices?period=<%= next %>"><%= m.periodLabel(next) %> →</a>
+  </div>
+</div>
+
+<section class="card steps">
+  <div class="step">
+    <span class="num-badge">1</span>
+    <div><strong>Create this month’s invoices</strong>
+      <p class="muted"><%= pending %> active agreement(s) still need an invoice for <%= m.periodLabel(period) %>. Each invoice shows the instalment plus any arrears.</p>
+      <form method="post" action="/invoices/generate"><input type="hidden" name="_csrf" value="<%= csrf %>"><input type="hidden" name="period" value="<%= period %>">
+        <button class="btn primary" <%= pending ? '' : 'disabled' %>>Generate <%= pending || '' %> invoice(s)</button></form>
+    </div>
+  </div>
+  <div class="step">
+    <span class="num-badge">2</span>
+    <div><strong>Send by e-mail</strong>
+      <p class="muted">E-mails every unsent invoice with the PDF attached.</p>
+      <% if (emailReady) { %>
+      <form method="post" action="/invoices/email-all" onsubmit="this.querySelector('button').disabled=true; this.querySelector('button').textContent='Sending…'">
+        <input type="hidden" name="_csrf" value="<%= csrf %>"><input type="hidden" name="period" value="<%= period %>">
+        <button class="btn primary">✉️ E-mail all unsent</button></form>
+      <% } else { %><p class="bad small">E-mail isn’t set up yet – add SMTP settings to <code>.env</code> (see README).</p><% } %>
+    </div>
+  </div>
+  <div class="step">
+    <span class="num-badge">3</span>
+    <div><strong>Send on WhatsApp</strong>
+      <% if (waApiReady) { %>
+        <p class="muted">Sends every unsent invoice through the WhatsApp Business API.</p>
+        <form method="post" action="/invoices/whatsapp-all"><input type="hidden" name="_csrf" value="<%= csrf %>"><input type="hidden" name="period" value="<%= period %>"><button class="btn wa">💬 WhatsApp all unsent</button></form>
+      <% } else { %>
+        <p class="muted">Click <em>💬 WhatsApp</em> on each row: WhatsApp opens with the message and invoice link ready – just press send.</p>
+      <% } %>
+    </div>
+  </div>
+</section>
+
+<div class="card flush">
+  <%- include('partials/invoice-rows', { invoices: rows, showName: true }) %>
+</div>
+<%- include('partials/foot') %>

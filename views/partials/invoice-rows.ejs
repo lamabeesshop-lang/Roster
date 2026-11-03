@@ -1,0 +1,34 @@
+<div class="table-wrap"><table>
+  <thead><tr>
+    <th>Invoice</th><% if (showName) { %><th>Member</th><% } %><th>Month</th><th class="num">Amount due</th><th>Due</th><th>Sent</th><th>Send</th><th></th>
+  </tr></thead>
+  <tbody>
+  <% invoices.forEach(function (i) { var sent = i.emailed_at || i.whatsapp_at; %>
+    <tr>
+      <td><a href="/invoices/<%= i.id %>/pdf" target="_blank"><%= i.number %></a></td>
+      <% if (showName) { %><td><a href="/agreements/<%= i.agreement_id %>"><strong><%= i.call_sign %></strong></a> <%= i.full_names %> <%= i.surname %></td><% } %>
+      <td><%= m.periodLabel(i.period) %></td>
+      <td class="num"><%= m.formatRand(i.amount_due_cents) %><% if (i.arrears_cents) { %><br><span class="small bad">incl. <%= m.formatRand(i.arrears_cents) %> arrears</span><% } %></td>
+      <td><%= m.formatDate(i.due_on) %></td>
+      <td class="small">
+        <% if (i.emailed_at) { %><div>✉️ <%= m.formatDate(i.emailed_at) %></div><% } %>
+        <% if (i.whatsapp_at) { %><div>💬 <%= m.formatDate(i.whatsapp_at) %></div><% } %>
+        <% if (!sent) { %><span class="muted">not sent</span><% } %>
+      </td>
+      <td class="sendbtns">
+        <form method="post" action="/invoices/<%= i.id %>/email"><input type="hidden" name="_csrf" value="<%= csrf %>">
+          <button class="btn sm" <%= i.email ? '' : 'disabled title="No e-mail address"' %>>✉️ Email</button></form>
+        <% if (i.wa) { %><a class="btn sm wa" href="/invoices/<%= i.id %>/whatsapp" target="_blank" rel="noopener">💬 WhatsApp</a><% } else { %><button class="btn sm" disabled title="No valid cellphone">💬</button><% } %>
+        <% if (waApiReady) { %><form method="post" action="/invoices/<%= i.id %>/whatsapp-api"><input type="hidden" name="_csrf" value="<%= csrf %>"><button class="btn sm wa" title="Send automatically via WhatsApp Business API">🤖 Auto</button></form><% } %>
+      </td>
+      <td class="small">
+        <details class="more"><summary>⋯</summary>
+          <form method="post" action="/invoices/<%= i.id %>/recalc"><input type="hidden" name="_csrf" value="<%= csrf %>"><button class="link">Recalculate</button></form>
+          <form method="post" action="/invoices/<%= i.id %>/delete" onsubmit="return confirm('Delete invoice <%= i.number %>?')"><input type="hidden" name="_csrf" value="<%= csrf %>"><button class="link danger">Delete</button></form>
+        </details>
+      </td>
+    </tr>
+  <% }) %>
+  <% if (!invoices.length) { %><tr><td colspan="<%= showName ? 8 : 7 %>" class="muted">No invoices yet.</td></tr><% } %>
+  </tbody>
+</table></div>

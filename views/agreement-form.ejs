@@ -1,0 +1,44 @@
+<%- include('partials/head', { title: a.id ? 'Edit agreement' : 'New agreement' }) %>
+<h1><%= a.id ? 'Edit agreement ' + a.call_sign : 'New radio sale agreement' %></h1>
+<% if (errors.length) { %><div class="flash error"><% errors.forEach(function (e) { %><div><%= e %></div><% }) %></div><% } %>
+<form method="post" action="<%= a.id ? '/agreements/' + a.id : '/agreements' %>" <%- a.id ? '' : 'enctype="multipart/form-data"' %> class="card form">
+  <input type="hidden" name="_csrf" value="<%= csrf %>">
+  <h2>Part A: Purchaser details</h2>
+  <div class="fields">
+    <label>Call sign * <input name="call_sign" value="<%= a.call_sign || '' %>" required placeholder="e.g. S269"></label>
+    <label>Identity number <input name="id_number" value="<%= a.id_number || '' %>"></label>
+    <label>Surname * <input name="surname" value="<%= a.surname || '' %>" required></label>
+    <label>Full names * <input name="full_names" value="<%= a.full_names || '' %>" required></label>
+    <label>Initials <input name="initials" value="<%= a.initials || '' %>"></label>
+    <label class="wide">Physical address <input name="address" value="<%= a.address || '' %>"></label>
+    <label>Suburb <input name="suburb" value="<%= a.suburb || '' %>"></label>
+    <label>Postal code <input name="postal_code" value="<%= a.postal_code || '' %>"></label>
+    <label>Cellphone (WhatsApp) <input name="cellphone" value="<%= a.cellphone || '' %>" type="tel" placeholder="082 123 4567"></label>
+    <label>E-mail address <input name="email" value="<%= a.email || '' %>" type="email"></label>
+  </div>
+  <h2>Part B: Radio and payment terms</h2>
+  <div class="fields">
+    <label>Radio make and model * <input name="radio_model" value="<%= a.radio_model || '' %>" required></label>
+    <label>Radio serial number <input name="serial_number" value="<%= a.serial_number || '' %>"></label>
+    <label>Purchase price (R) * <input name="price" value="<%= a.price_cents ? (a.price_cents / 100).toFixed(2) : '' %>" inputmode="decimal" required></label>
+    <label>Payment plan *
+      <select name="plan_months">
+        <% [3, 6].concat([3, 6].includes(Number(a.plan_months)) ? [] : [Number(a.plan_months) || 3]).forEach(function (n) { %>
+          <option value="<%= n %>" <%= Number(a.plan_months) === n ? 'selected' : '' %>><%= n %>-month plan</option>
+        <% }) %>
+      </select>
+    </label>
+    <label>Agreement (signing) date * <input name="start_date" type="date" value="<%= a.start_date || '' %>" required></label>
+  </div>
+  <p class="hint">First instalment is due on the signing date; the rest by the last day of each following month.</p>
+  <label>Notes <textarea name="notes" rows="2"><%= a.notes || '' %></textarea></label>
+  <% if (!a.id) { %>
+  <h2>Signed agreement (optional now – you can upload later)</h2>
+  <input type="file" name="signed" accept=".pdf,image/*">
+  <% } %>
+  <div class="actions">
+    <button class="btn primary">Save agreement</button>
+    <a class="btn" href="<%= a.id ? '/agreements/' + a.id : '/agreements' %>">Cancel</a>
+  </div>
+</form>
+<%- include('partials/foot') %>

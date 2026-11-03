@@ -1,0 +1,118 @@
+<%- include('partials/head', { title: a.call_sign }) %>
+<div class="pagehead">
+  <div>
+    <h1><%= a.call_sign %> · <%= a.full_names %> <%= a.surname %> <span class="badge <%= a.status %>"><%= a.status %></span></h1>
+    <p class="muted"><%= a.radio_model %> · Serial <%= a.serial_number || '—' %> · <%= m.formatRand(a.price_cents) %> over <%= a.plan_months %> months from <%= m.formatDate(a.start_date) %></p>
+  </div>
+  <a class="btn" href="/agreements/<%= a.id %>/edit">Edit details</a>
+</div>
+
+<div class="stats">
+  <div class="stat"><span class="label">Paid</span><span class="value"><%= m.formatRand(pos.paid_cents) %></span></div>
+  <div class="stat"><span class="label">Balance</span><span class="value"><%= m.formatRand(pos.balance_cents) %></span></div>
+  <div class="stat"><span class="label">Arrears</span><span class="value <%= pos.arrears_cents ? 'bad' : '' %>"><%= m.formatRand(pos.arrears_cents) %></span></div>
+  <div class="stat"><span class="label">Payment reference</span><span class="value small"><%= reference %></span></div>
+</div>
+
+<div class="grid2">
+  <section class="card">
+    <h2>Purchaser</h2>
+    <dl class="dl">
+      <dt>ID number</dt><dd><%= a.id_number || '—' %></dd>
+      <dt>Initials</dt><dd><%= a.initials || '—' %></dd>
+      <dt>Address</dt><dd><%= [a.address, a.suburb, a.postal_code].filter(Boolean).join(', ') || '—' %></dd>
+      <dt>Cellphone</dt><dd><%= a.cellphone || '—' %></dd>
+      <dt>E-mail</dt><dd><%= a.email || '—' %></dd>
+      <% if (a.notes) { %><dt>Notes</dt><dd><%= a.notes %></dd><% } %>
+    </dl>
+  </section>
+  <section class="card" id="signed">
+    <h2>Signed agreement</h2>
+    <% if (a.signed_file) { %>
+      <p>✅ <a href="/agreements/<%= a.id %>/signed" target="_blank"><%= a.signed_file_name %></a><br>
+      <span class="muted">Uploaded <%= m.formatDate(a.signed_uploaded_at) %></span></p>
+    <% } else { %><p class="bad">No signed copy uploaded yet.</p><% } %>
+    <form method="post" action="/agreements/<%= a.id %>/upload" enctype="multipart/form-data" class="inline">
+      <input type="hidden" name="_csrf" value="<%= csrf %>">
+      <input type="file" name="signed" accept=".pdf,image/*" required>
+      <button class="btn"><%= a.signed_file ? 'Replace' : 'Upload' %></button>
+    </form>
+    <p class="hint">PDF or photo/scan, max 15 MB.</p>
+  </section>
+</div>
+
+<section class="card">
+  <h2>Instalment schedule</h2>
+  <div class="table-wrap"><table>
+    <thead><tr><th>#</th><th>Month</th><th>Due</th><th class="num">Amount</th><th class="num">Covered</th><th>Status</th></tr></thead>
+    <tbody>
+    <% pos.schedule.forEach(function (r) { %>
+      <tr><td><%= r.number %></td><td><%= m.periodLabel(r.period) %></td><td><%= m.formatDate(r.due_on) %></td>
+      <td class="num"><%= m.formatRand(r.amount_cents) %></td><td class="num"><%= m.formatRand(r.covered_cents) %></td>
+      <td><span class="badge <%= r.state %>"><%= r.state %></span></td></tr>
+    <% }) %>
+    </tbody>
+  </table></div>
+</section>
+
+<div class="grid2">
+  <section class="card">
+    <h2>Payments</h2>
+    <form method="post" action="/agreements/<%= a.id %>/payments" class="payform">
+      <input type="hidden" name="_csrf" value="<%= csrf %>">
+      <label>Date <input type="date" name="paid_on" value="<%= m.today() %>" required></label>
+      <label>Amount (R) <input name="amount" inputmode="decimal" required value="<%= pos.next ? ((pos.next.amount_cents - pos.next.covered_cents) / 100).toFixed(2) : '' %>"></label>
+      <label>Reference <input name="reference" value="<%= reference %>"></label>
+      <button class="btn primary">Capture payment</button>
+    </form>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Date</th><th class="num">Amount</th><th>Reference</th><th>By</th><th></th></tr></thead>
+      <tbody>
+      <% payments.forEach(function (p) { %>
+        <tr><td><%= m.formatDate(p.paid_on) %></td><td class="num"><%= m.formatRand(p.amount_cents) %></td><td><%= p.reference %></td><td class="muted"><%= p.user_name || '' %></td>
+        <td><form method="post" action="/payments/<%= p.id %>/delete" onsubmit="return confirm('Remove this payment?')"><input type="hidden" name="_csrf" value="<%= csrf %>"><button class="link danger">remove</button></form></td></tr>
+      <% }) %>
+      <% if (!payments.length) { %><tr><td colspan="5" class="muted">No payments yet.</td></tr><% } %>
+      </tbody>
+    </table></div>
+  </section>
+
+  <section class="card">
+    <h2>Invoices</h2>
+    <% if (a.status === 'active') { %>
+    <form method="post" action="/agreements/<%= a.id %>/invoice" class="inline">
+      <input type="hidden" name="_csrf" value="<%= csrf %>">
+      <input type="month" name="period" value="<%= m.currentPeriod() %>">
+      <button class="btn">Create invoice</button>
+    </form>
+    <% } %>
+    <%- include('partials/invoice-rows', { invoices: invoices, showName: false }) %>
+  </section>
+</div>
+
+<section class="card">
+  <h2>History</h2>
+  <ul class="activity">
+    <% activity.forEach(function (r) { %><li><span class="muted"><%= m.formatDate(r.created_at) %></span> <strong><%= r.user_name || '—' %></strong> <%= r.action %></li><% }) %>
+  </ul>
+  <div class="actions">
+    <% if (a.status !== 'terminated') { %>
+      <form method="post" action="/agreements/<%= a.id %>/status" onsubmit="return confirm('Terminate this agreement (e.g. radio returned/collected for non-payment)?')">
+        <input type="hidden" name="_csrf" value="<%= csrf %>"><input type="hidden" name="status" value="terminated">
+        <button class="btn danger-outline">Terminate agreement</button>
+      </form>
+    <% } else { %>
+      <form method="post" action="/agreements/<%= a.id %>/status"><input type="hidden" name="_csrf" value="<%= csrf %>"><input type="hidden" name="status" value="active"><button class="btn">Re-activate</button></form>
+    <% } %>
+    <% if (user.is_admin) { %>
+      <details class="danger-zone"><summary>Delete…</summary>
+        <form method="post" action="/agreements/<%= a.id %>/delete" class="inline">
+          <input type="hidden" name="_csrf" value="<%= csrf %>">
+          <input name="confirm" placeholder="Type <%= a.call_sign %> to confirm">
+          <button class="btn danger">Delete permanently</button>
+        </form>
+      </details>
+    <% } %>
+  </div>
+</section>
+<%- include('partials/foot') %>
