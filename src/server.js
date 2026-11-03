@@ -107,6 +107,10 @@ app.get('/setup', (req, res) => (userCount() ? res.redirect('/login') : res.rend
 app.post('/setup', (req, res) => {
   if (userCount()) return res.redirect('/login');
   const { name, username, password } = req.body;
+  if (config.setupCode && req.body.setup_code !== config.setupCode) {
+    flash(req, 'error', 'Wrong setup code (it is the SETUP_CODE value in your settings).');
+    return res.redirect('/setup');
+  }
   if (!name || !username || (password || '').length < 8) {
     flash(req, 'error', 'Fill in all fields; the password must be at least 8 characters.');
     return res.redirect('/setup');

@@ -22,7 +22,7 @@ cp .env.example .env      # then edit: BASE_URL, SESSION_SECRET, SMTP settings
 npm start                 # http://localhost:3000
 ```
 
-The first visit asks you to create the **administrator** account. Then go to **Team** and add your two team members (username and temporary password). They can change their password after logging in.
+The first visit asks you to create the **administrator** account (and for `SETUP_CODE`, if you set one). Then go to **Team** and add your two team members (username and temporary password). They can change their password after logging in.
 
 All data (SQLite database and uploaded files) lives in `DATA_DIR` (default `./data`). **Back this folder up.**
 
@@ -30,12 +30,24 @@ Run the tests with `npm test`.
 
 ## Hosting
 
-Members open invoice links from their phones, so the site must be reachable on the internet over **HTTPS**. Set `BASE_URL` to that address. Any host with a persistent disk works:
+Members open invoice links from their phones, so the site must be reachable on the internet over **HTTPS**. It also needs a **persistent disk** for the database and uploaded agreements: without one, everything is lost on every redeploy.
 
-- **Docker** (VPS, Railway, Fly.io, Render with a disk): `docker build -t radios . && docker run -p 3000:3000 -v radios-data:/data --env-file .env radios`
-- **Plain VPS**: `npm ci --omit=dev && npm start` behind nginx/Caddy (Caddy gives free HTTPS automatically).
+### Railway (recommended, about $5/month)
 
-Do not use a host without a persistent disk, or the database and uploads are lost on every redeploy.
+1. Sign up at railway.com with your GitHub account. Choose **New Project → Deploy from GitHub repo** and pick `Roster`, branch `main`. Railway builds it with the included Dockerfile.
+2. On the service, open the menu and choose **Attach volume**, then set the mount path to `/data`.
+3. Under **Variables**, add `SESSION_SECRET`, `SETUP_CODE` and the SMTP settings from `.env.example`. Leave `PORT` unset, because Railway provides it. `DATA_DIR=/data` is already set in the Dockerfile.
+4. Under **Settings → Networking**, click **Generate Domain**, or add your own domain. Add a variable `BASE_URL=https://<that domain>`, which triggers a redeploy.
+5. Open the site, enter the setup code, and create the admin account. Then add your team on the **Team** page.
+
+### Other hosts
+
+- **Docker** (any VPS, Fly.io, Render with a disk): `docker build -t radios . && docker run -p 3000:3000 -v radios-data:/data --env-file .env radios`
+- **Plain VPS**: `npm ci --omit=dev && npm start` behind nginx or Caddy. Caddy gets HTTPS certificates automatically.
+
+### Backups
+
+Everything lives in `DATA_DIR` (`/data` in Docker). On Railway, turn on volume backups. On a VPS, copy the folder off the server regularly.
 
 ## E-mail setup
 

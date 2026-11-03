@@ -4,6 +4,7 @@
   <p class="muted">Create the first administrator account. You can add your two team members afterwards.</p>
   <form method="post" action="/setup" class="stack">
     <input type="hidden" name="_csrf" value="<%= csrf %>">
+    <% if (config.setupCode) { %><label>Setup code <input name="setup_code" required autocomplete="off"></label><% } %>
     <label>Your name <input name="name" required></label>
     <label>Username <input name="username" required autocomplete="username"></label>
     <label>Password (min 8 characters) <input name="password" type="password" minlength="8" required autocomplete="new-password"></label>
